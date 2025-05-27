@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google'; // Using Inter as a clean, modern alternative to Geist for body
-import { GeistMono } from 'next/font/google';
+import { Inter, Roboto_Mono } from 'next/font/google'; // Using Inter as a clean, modern alternative
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/layout/Header';
@@ -11,9 +10,9 @@ const fontSans = Inter({
   variable: '--font-sans',
 });
 
-const fontMono = GeistMono({
-  variable: '--font-geist-mono',
+const fontMono = Roboto_Mono({
   subsets: ['latin'],
+  variable: '--font-mono', // Updated variable name
 });
 
 export const metadata: Metadata = {
