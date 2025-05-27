@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Attendee } from '@/lib/types';
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Mail, User, CalendarClock } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns'; // parseISO removed
 
 interface AttendeeListProps {
   attendees: Attendee[];
@@ -68,7 +69,7 @@ export function AttendeeList({ attendees }: AttendeeListProps) {
                 )}
               </TableCell>
               <TableCell className="text-right">
-                {attendee.checkInTime ? format(parseISO(attendee.checkInTime), "MMM d, yyyy HH:mm") : 'N/A'}
+                {attendee.checkInTime ? format(attendee.checkInTime.toDate(), "MMM d, yyyy HH:mm") : 'N/A'}
               </TableCell>
             </TableRow>
           ))}

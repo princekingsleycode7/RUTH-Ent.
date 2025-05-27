@@ -1,8 +1,13 @@
+
+import type { Timestamp } from 'firebase/firestore';
+
 export interface Attendee {
-  id: string;
+  id: string; // Firestore document ID
   name: string;
   email: string;
   checkedIn: boolean;
-  checkInTime?: string; // ISO string for date and time
+  checkInTime?: Timestamp; // Firestore Timestamp for date and time
   qrCodeValue: string; // URL to the attendee page e.g., /attendee/[id]
+  createdAt?: Timestamp; // Firestore Timestamp
+  updatedAt?: Timestamp; // Firestore Timestamp
 }

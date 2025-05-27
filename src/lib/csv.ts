@@ -1,5 +1,6 @@
+
 import type { Attendee } from './types';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns'; // parseISO removed
 
 export function exportAttendeesToCSV(attendees: Attendee[]): void {
   if (attendees.length === 0) {
@@ -7,13 +8,16 @@ export function exportAttendeesToCSV(attendees: Attendee[]): void {
     return;
   }
 
-  const headers = ["ID", "Name", "Email", "Checked In", "Check-in Time"];
+  const headers = ["ID", "Name", "Email", "Checked In", "Check-in Time", "Registered At"];
   const csvRows = [headers.join(",")];
 
   attendees.forEach(attendee => {
     const checkedInStatus = attendee.checkedIn ? "Yes" : "No";
     const checkInTimeFormatted = attendee.checkInTime 
-      ? format(parseISO(attendee.checkInTime), "yyyy-MM-dd HH:mm:ss") 
+      ? format(attendee.checkInTime.toDate(), "yyyy-MM-dd HH:mm:ss") 
+      : "N/A";
+    const createdAtFormatted = attendee.createdAt
+      ? format(attendee.createdAt.toDate(), "yyyy-MM-dd HH:mm:ss")
       : "N/A";
     
     const row = [
@@ -22,6 +26,7 @@ export function exportAttendeesToCSV(attendees: Attendee[]): void {
       attendee.email,
       checkedInStatus,
       checkInTimeFormatted,
+      createdAtFormatted,
     ].join(",");
     csvRows.push(row);
   });

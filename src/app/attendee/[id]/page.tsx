@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -9,61 +10,95 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle, Mail, User, CalendarClock, MessageSquareHeart } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns'; // parseISO removed as we'll use Timestamp.toDate()
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function AttendeePage() {
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : '';
   
-  const { getAttendeeById, checkInAttendee: markAttendeeCheckedIn } = useAttendees();
+  const { getAttendeeById, checkInAttendee: markAttendeeCheckedIn, isLoading: attendeesLoading, error: attendeesError } = useAttendees();
   const [attendee, setAttendee] = useState<Attendee | null | undefined>(undefined); // undefined for loading, null for not found
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (id) {
-      setIsLoading(true);
-      setError(null);
-      // Simulate data fetching delay
-      setTimeout(async () => {
-        const fetchedAttendee = getAttendeeById(id);
-        
-        if (fetchedAttendee) {
-          if (!fetchedAttendee.checkedIn) {
-            const updatedAttendee = markAttendeeCheckedIn(id);
-            setAttendee(updatedAttendee);
-            try {
-              const aiResponse = await generateCheckInConfirmation({
-                attendeeName: updatedAttendee?.name || 'Valued Attendee',
+    setPageError(attendeesError);
+  }, [attendeesError]);
+
+  useEffect(() => {
+    if (attendeesLoading) {
+      setPageLoading(true);
+      return;
+    }
+    if (!id) {
+      setPageLoading(false);
+      setPageError("Invalid attendee ID.");
+      setAttendee(null);
+      return;
+    }
+
+    const fetchedAttendee = getAttendeeById(id);
+    
+    if (fetchedAttendee) {
+      setAttendee(fetchedAttendee);
+      if (!fetchedAttendee.checkedIn) {
+        markAttendeeCheckedIn(id)
+          .then(updatedAttendeeFromHook => {
+            if (updatedAttendeeFromHook) {
+              // The hook's onSnapshot will also update, but this gives immediate feedback for AI
+              // setAttendee(updatedAttendeeFromHook); // Optional: let onSnapshot handle state to avoid potential race
+              generateCheckInConfirmation({
+                attendeeName: updatedAttendeeFromHook.name || 'Valued Attendee',
                 eventName: 'SwiftCheck Event',
                 timeSinceLastVisit: 'their first visit this year', // Placeholder
+              }).then(aiResponse => {
+                setConfirmationMessage(aiResponse.confirmationMessage);
+              }).catch(aiError => {
+                console.error("AI confirmation error:", aiError);
+                setConfirmationMessage("Welcome! We're delighted to have you."); // Fallback AI message
+                 toast({
+                    variant: 'destructive',
+                    title: 'AI Message Error',
+                    description: 'Could not generate personalized message.',
+                  });
               });
-              setConfirmationMessage(aiResponse.confirmationMessage);
-            } catch (aiError) {
-              console.error("AI confirmation error:", aiError);
-              setConfirmationMessage("Welcome! We're delighted to have you."); // Fallback AI message
+            } else {
+                setPageError("Failed to check-in attendee. Please try again.");
+                 toast({
+                    variant: 'destructive',
+                    title: 'Check-in Failed',
+                    description: 'Could not complete check-in process.',
+                  });
             }
-          } else {
-            setAttendee(fetchedAttendee);
-            setConfirmationMessage("This attendee has already been checked in.");
-          }
-        } else {
-          setAttendee(null); // Not found
-          setError("Attendee not found. Please ensure the QR code is correct or contact support.");
-        }
-        setIsLoading(false);
-      }, 500);
+          })
+          .catch(checkInError => {
+            console.error("Check-in error:", checkInError);
+            setPageError("An error occurred during check-in.");
+            toast({
+              variant: 'destructive',
+              title: 'Check-in Error',
+              description: 'An unexpected error occurred.',
+            });
+          });
+      } else {
+        setConfirmationMessage("This attendee has already been checked in.");
+      }
     } else {
-      setIsLoading(false);
-      setError("Invalid attendee ID.");
-      setAttendee(null);
+      setAttendee(null); // Not found
+      setPageError("Attendee not found. Please ensure the QR code is correct or contact support.");
     }
+    setPageLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, getAttendeeById, markAttendeeCheckedIn]); // markAttendeeCheckedIn is stable, getAttendeeById may change if attendees list changes
+  }, [id, attendeesLoading, getAttendeeById, markAttendeeCheckedIn]);
 
-  if (isLoading) {
+
+  if (pageLoading || attendeesLoading) {
     return (
       <Card className="w-full max-w-lg mx-auto shadow-lg">
         <CardHeader>
@@ -85,7 +120,7 @@ export default function AttendeePage() {
     );
   }
 
-  if (error) {
+  if (pageError) {
      return (
       <Card className="w-full max-w-lg mx-auto shadow-lg border-destructive">
         <CardHeader>
@@ -95,21 +130,20 @@ export default function AttendeePage() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-destructive-foreground">{error}</p>
+          <p className="text-destructive-foreground">{pageError}</p>
         </CardContent>
       </Card>
     );
   }
 
   if (!attendee) {
-    // This case should ideally be covered by the error state, but as a fallback:
     return (
       <Card className="w-full max-w-lg mx-auto shadow-lg">
         <CardHeader>
           <CardTitle>Attendee Not Found</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>The requested attendee could not be found.</p>
+          <p>The requested attendee could not be found, or there was an issue loading the data.</p>
         </CardContent>
       </Card>
     );
@@ -140,7 +174,8 @@ export default function AttendeePage() {
           <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-md text-sm">
             <CalendarClock className="h-5 w-5 text-primary" />
             <span className="font-medium text-muted-foreground">Checked In At:</span>
-            <span className="text-foreground">{format(parseISO(attendee.checkInTime), "PPPp")}</span>
+            {/* Ensure checkInTime is a Firestore Timestamp and use .toDate() */}
+            <span className="text-foreground">{format(attendee.checkInTime.toDate(), "PPPp")}</span>
           </div>
         )}
 
