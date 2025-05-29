@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export default function RegisterPage() {
   const [registeredAttendee, setRegisteredAttendee] = useState<Attendee | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addAttendee, error: attendeesError } = useAttendees();
+  const { addAttendee, error: attendeesError } = useAttendees(); // attendeesError is from the hook
   const { toast } = useToast();
 
   const handleRegister = async (values: AttendeeFormValues) => {
@@ -26,23 +26,24 @@ export default function RegisterPage() {
         profileImageUri = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
+          reader.onerror = (error) => reject(error); // This reject will be caught by the catch block below
           reader.readAsDataURL(values.profileImage!);
         });
-      } catch (error) {
-        console.error("Image processing failed:", error);
+      } catch (imgError) {
+        console.error("Image processing failed:", imgError);
         toast({
           title: "Image Processing Failed",
           description: "Could not process the uploaded image. Please try a different image or skip it.",
           variant: "destructive",
         });
         setIsSubmitting(false);
-        return;
+        return; // Exit early if image processing fails
       }
     }
 
     try {
       const newAttendee = await addAttendee(values.name, values.email, profileImageUri);
+      
       if (newAttendee) {
         setRegisteredAttendee(newAttendee);
         toast({
@@ -50,13 +51,19 @@ export default function RegisterPage() {
           description: `${values.name} has been successfully registered. QR code generated.`,
         });
       } else {
-        throw new Error("Failed to register attendee due to a problem with data saving.");
+        // addAttendee returned null. This means an error occurred in useAttendees (e.g., Firestore issue).
+        // The useAttendees hook has already called setError, so its `error` state (attendeesError here) will be updated.
+        // The Alert component (already in the JSX below) will display this attendeesError.
+        // No need to throw a new error here or show another toast for this specific case.
+        // The console.error for the specific Firestore error is handled within useAttendees.
       }
-    } catch (error) {
-      console.error("Registration failed:", error);
+    } catch (unexpectedError) {
+      // This catch block is now for other unexpected errors that might occur
+      // (e.g., if addAttendee itself threw an unhandled exception, though it's designed to return null on caught errors).
+      console.error("Unexpected error during registration submission:", unexpectedError);
       toast({
         title: "Registration Failed",
-        description: (error instanceof Error ? error.message : "Could not register attendee. Please try again."),
+        description: (unexpectedError instanceof Error ? unexpectedError.message : "An unexpected error occurred. Please try again."),
         variant: "destructive",
       });
     } finally {
