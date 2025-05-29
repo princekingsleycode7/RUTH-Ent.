@@ -8,7 +8,7 @@ import { useAttendees } from '@/hooks/useAttendees';
 import { AttendeeList } from '@/components/AttendeeList';
 import { Button } from '@/components/ui/button';
 import { exportAttendeesToCSV } from '@/lib/csv';
-import { Download, UserPlus, AlertTriangle, BarChart } from 'lucide-react';
+import { Download, UserPlus, AlertTriangle, BarChart, Users } from 'lucide-react'; // Added Users here
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Checked-In Attendees</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
+            <UserPlus className="h-4 w-4 text-muted-foreground" /> {/* This UserPlus is for a different card */}
           </CardHeader>
           <CardContent>
             {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{checkedInCount}</div>}
