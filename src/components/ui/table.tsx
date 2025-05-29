@@ -28,12 +28,14 @@ TableHeader.displayName = "TableHeader"
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...rest }, ref) => (
   <tbody
     ref={ref}
     className={cn("[&_tr:last-child]:border-0", className)}
-    {...props}
-  />
+    {...rest}
+  >
+    {children}
+  </tbody>
 ))
 TableBody.displayName = "TableBody"
 
@@ -55,44 +57,58 @@ TableFooter.displayName = "TableFooter"
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, children, ...rest }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-      className
-    )}
-    {...rest}
-  >
-    {children}
-  </tr>
-))
+>(({ className, children, ...rest }, ref) => {
+  // Filter out direct children that are whitespace-only strings
+  const filteredChildren = React.Children.toArray(children).filter(child => {
+    if (typeof child === 'string' && child.trim() === '') {
+      return false;
+    }
+    return true;
+  });
+
+  return (
+    <tr
+      ref={ref}
+      className={cn(
+        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        className
+      )}
+      {...rest}
+    >
+      {filteredChildren}
+    </tr>
+  );
+})
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...rest }, ref) => (
   <th
     ref={ref}
     className={cn(
       "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className
     )}
-    {...props}
-  />
+    {...rest}
+  >
+    {children}
+  </th>
 ))
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...rest }, ref) => (
   <td
     ref={ref}
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
-    {...props}
-  />
+    {...rest}
+  >
+    {children}
+  </td>
 ))
 TableCell.displayName = "TableCell"
 
