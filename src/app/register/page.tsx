@@ -14,12 +14,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
 import html2canvas from 'html2canvas';
 
-// Placeholder event details - replace with dynamic data if needed
+// Updated event details
 const eventDetails = {
-  name: "SwiftCheck Annual Summit",
-  venue: "Grand Tech Arena, Silicon Valley",
-  time: "Nov 15-17, 2024",
-  logoUrl: "https://placehold.co/150x50.png?text=EventLogo", // Optional logo
+  name: "SPARK CONFERENCE 2025",
+  venue: "Tech Megacenter", // Made more concise
+  time: "Oct 26-28, 2025", // Made more concise
+  logoUrl: "https://storage.googleapis.com/idx-dev-01hsv3s9y3m1x07w3r6f3pn49w/images/spark_logo_1717171878053.png",
 };
 
 
@@ -89,7 +89,7 @@ export default function RegisterPage() {
         });
       } else {
         // Error is already set by useAttendees hook if addAttendee returns null due to hook error
-        if (!attendeesHookError) { 
+         if (!attendeesHookError && !pageError) { // Check if pageError isn't already set by image processing
              setPageError("Failed to register attendee. Please check the details and try again.");
         }
       }
@@ -110,8 +110,8 @@ export default function RegisterPage() {
   const handleDownloadIdCard = () => {
     if (idCardRef.current && registeredAttendee) {
       html2canvas(idCardRef.current, { 
-        scale: 2, // Increase scale for better resolution
-        useCORS: true // If images are from external sources
+        scale: 2, 
+        useCORS: true 
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `${registeredAttendee.name.replace(/\s+/g, '_')}_ID_Card.png`;
@@ -126,16 +126,11 @@ export default function RegisterPage() {
   };
 
   const handleEmailIdCard = () => {
-    // Placeholder: In a real app, this would involve server-side logic to send an email.
-    // For now, we can use a mailto link or just a toast.
     if (registeredAttendee) {
       const subject = `Your Event ID Card for ${eventDetails.name}`;
       const body = `Hello ${registeredAttendee.name},\n\nPlease find your event details attached or download your ID card.\n\nEvent: ${eventDetails.name}\nVenue: ${eventDetails.venue}\nTime: ${eventDetails.time}\n\nView/Scan your QR: ${window.location.origin}/attendee/${registeredAttendee.id}\n\nWe look forward to seeing you!`;
       const mailtoLink = `mailto:${registeredAttendee.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
-      // Attempt to open mail client. Some browsers might block this.
-      // window.open(mailtoLink, '_blank'); // Alternative to direct assignment
-
       toast({
         title: "Email ID Card (Placeholder)",
         description: "To email your ID card, please download it and attach it to an email. A new email draft may have opened.",
@@ -194,7 +189,7 @@ export default function RegisterPage() {
     );
   }
 
-  if (registrationLimitReached && !pageError) {
+  if (registrationLimitReached && !pageError) { // Ensure !pageError to prevent overriding specific errors
      return (
       <div className="flex flex-col items-center py-8 space-y-6 text-center">
         <Alert variant="destructive" className="w-full max-w-lg">

@@ -5,7 +5,7 @@ import type { Attendee } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import QRCode from 'qrcode.react';
-import { Building, CalendarDays, Clock, Ticket } from 'lucide-react';
+import { Building, CalendarDays } from 'lucide-react'; // Removed Clock, Ticket is also not used here.
 
 interface AttendeeIdCardProps {
   attendee: Attendee;
@@ -23,49 +23,62 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
     <div ref={idCardRef} className="bg-card p-0.5 rounded-lg shadow-2xl" data-testid="attendee-id-card">
       <Card className="w-[320px] aspect-[2/3] mx-auto border-primary border-2 flex flex-col overflow-hidden shadow-inner">
         {/* Header Section */}
-        <div className="bg-primary text-primary-foreground p-3 text-center">
+        <div className="bg-primary text-primary-foreground p-3 text-center space-y-1">
           {eventDetails.logoUrl ? (
-            <img src={eventDetails.logoUrl} alt={`${eventDetails.name} Logo`} className="h-10 mx-auto mb-1" data-ai-hint="event logo"/>
+            <img 
+              src={eventDetails.logoUrl} 
+              alt={`${eventDetails.name} Logo`} 
+              className="h-12 mx-auto object-contain" // Increased height, object-contain
+              data-ai-hint="event spark logo"
+            />
           ) : (
-            <Ticket className="h-10 w-10 mx-auto mb-1 text-primary-foreground/80" />
+            <div className="h-12 flex items-center justify-center"> {/* Placeholder for logo if not provided */}
+                <span className="text-xs italic">Event Logo</span>
+            </div>
           )}
-          <h2 className="text-lg font-bold leading-tight">{eventDetails.name}</h2>
+          <h2 className="text-base font-bold leading-tight tracking-tight">{eventDetails.name}</h2>
         </div>
 
         {/* Body Section */}
-        <CardContent className="flex-grow flex flex-col items-center justify-around p-4 space-y-3">
-          <Avatar className="w-32 h-32 border-4 border-secondary shadow-lg">
+        <CardContent className="flex-grow flex flex-col items-center justify-around p-3 space-y-2">
+          <Avatar className="w-28 h-28 border-4 border-secondary shadow-lg">
             <AvatarImage 
               src={attendee.profileImageUri || `https://placehold.co/128x128.png?text=${attendee.name.charAt(0)}`} 
               alt={attendee.name} 
               data-ai-hint={attendee.profileImageUri ? "profile person" : "letter avatar"}/>
-            <AvatarFallback className="text-4xl">{attendee.name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="text-3xl">{attendee.name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
-
-          <div className="text-center">
-            <h3 className="text-2xl font-semibold text-primary">{attendee.name}</h3>
-            <p className="text-sm text-muted-foreground -mt-1">{attendee.email}</p>
-          </div>
           
-          <div className="p-2 bg-white rounded-md shadow">
-            <QRCode value={attendee.qrCodeValue} size={100} level="H" includeMargin={false} />
+          <div className="flex items-center justify-between w-full mt-2 gap-3 px-1">
+            <div className="p-1.5 bg-white rounded-md shadow-md">
+              <QRCode value={attendee.qrCodeValue} size={90} level="H" includeMargin={false} />
+            </div>
+            <div className="flex-1 text-left space-y-0.5 min-w-0"> {/* min-w-0 for truncation */}
+              <h3 className="text-xl font-semibold text-primary truncate">{attendee.name}</h3>
+              <p className="text-xs text-muted-foreground truncate">{attendee.email}</p>
+            </div>
           </div>
         </CardContent>
 
         {/* Footer Section */}
-        <div className="bg-muted/50 text-muted-foreground p-3 text-xs space-y-1 border-t">
-          <div className="flex items-center gap-2">
-            <Building className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="font-medium">Venue:</span>
-            <span>{eventDetails.venue}</span>
+        <div className="bg-muted/30 text-muted-foreground p-2.5 text-[0.65rem] space-y-1 border-t leading-tight">
+          <div className="flex items-start gap-1.5">
+            <Building className="h-3 w-3 text-primary shrink-0 mt-px" />
+            <div>
+                <span className="font-medium">Venue:</span>
+                <p className="leading-snug">{eventDetails.venue}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="font-medium">Date & Time:</span>
-            <span>{eventDetails.time}</span>
+          <div className="flex items-start gap-1.5">
+            <CalendarDays className="h-3 w-3 text-primary shrink-0 mt-px" />
+            <div>
+                <span className="font-medium">Date & Time:</span>
+                <p className="leading-snug">{eventDetails.time}</p>
+            </div>
           </div>
         </div>
       </Card>
     </div>
   );
 }
+
