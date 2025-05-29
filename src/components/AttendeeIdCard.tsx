@@ -5,7 +5,7 @@ import type { Attendee } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import QRCode from 'qrcode.react';
-import { Building, CalendarDays } from 'lucide-react'; // Removed Clock, Ticket is also not used here.
+import { Building, CalendarDays } from 'lucide-react'; 
 
 interface AttendeeIdCardProps {
   attendee: Attendee;
@@ -28,11 +28,12 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
             <img 
               src={eventDetails.logoUrl} 
               alt={`${eventDetails.name} Logo`} 
-              className="h-12 mx-auto object-contain" // Increased height, object-contain
+              className="h-12 mx-auto object-contain"
+              crossOrigin="anonymous" // Added crossOrigin attribute
               data-ai-hint="event spark logo"
             />
           ) : (
-            <div className="h-12 flex items-center justify-center"> {/* Placeholder for logo if not provided */}
+            <div className="h-12 flex items-center justify-center"> 
                 <span className="text-xs italic">Event Logo</span>
             </div>
           )}
@@ -53,7 +54,7 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
             <div className="p-1.5 bg-white rounded-md shadow-md">
               <QRCode value={attendee.qrCodeValue} size={90} level="H" includeMargin={false} />
             </div>
-            <div className="flex-1 text-left space-y-0.5 min-w-0"> {/* min-w-0 for truncation */}
+            <div className="flex-1 text-left space-y-0.5 min-w-0"> 
               <h3 className="text-xl font-semibold text-primary truncate">{attendee.name}</h3>
               <p className="text-xs text-muted-foreground truncate">{attendee.email}</p>
             </div>
@@ -81,4 +82,3 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
     </div>
   );
 }
-
