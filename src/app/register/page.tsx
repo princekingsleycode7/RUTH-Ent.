@@ -1,29 +1,38 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AttendeeForm, type AttendeeFormValues } from '@/components/AttendeeForm';
-import { QRCodeDisplay } from '@/components/QRCodeDisplay';
+import { AttendeeIdCard } from '@/components/AttendeeIdCard'; // New ID Card component
 import { useAttendees, REGISTRATION_LIMIT } from '@/hooks/useAttendees';
 import type { Attendee } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Home } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Home, Download, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
+import html2canvas from 'html2canvas';
+
+// Placeholder event details - replace with dynamic data if needed
+const eventDetails = {
+  name: "SwiftCheck Annual Summit",
+  venue: "Grand Tech Arena, Silicon Valley",
+  time: "Nov 15-17, 2024",
+  logoUrl: "https://placehold.co/150x50.png?text=EventLogo", // Optional logo
+};
+
 
 export default function RegisterPage() {
   const [registeredAttendee, setRegisteredAttendee] = useState<Attendee | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { attendees, addAttendee, isLoading: attendeesLoading, error: attendeesHookError } = useAttendees();
   const { toast } = useToast();
+  const idCardRef = useRef<HTMLDivElement>(null);
   
-  // Local error state for this page, distinct from the hook's error
   const [pageError, setPageError] = useState<string | null>(null);
 
   useEffect(() => {
-    // If the hook has an error (e.g., from fetching attendees), display it.
     if (attendeesHookError) {
       setPageError(attendeesHookError);
     }
@@ -33,7 +42,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (values: AttendeeFormValues) => {
     setIsSubmitting(true);
-    setPageError(null); // Clear previous page-specific errors
+    setPageError(null);
     let profileImageUri: string | undefined = undefined;
 
     if (registrationLimitReached) {
@@ -76,16 +85,10 @@ export default function RegisterPage() {
         setRegisteredAttendee(newAttendee);
         toast({
           title: "Attendee Registered!",
-          description: `${values.name} has been successfully registered. QR code generated.`,
+          description: `${values.name} has been successfully registered. Your ID card is ready.`,
         });
       } else {
-        // addAttendee returned null, meaning an error occurred in the hook (e.g. Firestore issue or limit reached).
-        // The useAttendees hook's `error` state (attendeesHookError) should be updated by the hook itself.
-        // We rely on the useEffect above to set pageError from attendeesHookError.
-        // No need to throw a new error here.
-        // If attendeesHookError is already set, it will be shown by the Alert.
-        // If it's specifically a limit error caught by the hook, it will also be in attendeesHookError.
-        if (!attendeesHookError) { // If hook didn't set an error, set a generic one
+        if (!attendeesHookError) { 
              setPageError("Failed to register attendee. Please check the details and try again.");
         }
       }
@@ -102,18 +105,72 @@ export default function RegisterPage() {
       setIsSubmitting(false);
     }
   };
+
+  const handleDownloadIdCard = () => {
+    if (idCardRef.current && registeredAttendee) {
+      html2canvas(idCardRef.current, { 
+        scale: 2, // Increase scale for better resolution
+        useCORS: true // If images are from external sources
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${registeredAttendee.name.replace(/\s+/g, '_')}_ID_Card.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        toast({ title: "ID Card Downloading", description: "Your ID card image is being downloaded." });
+      }).catch(err => {
+        console.error("Error generating ID card image:", err);
+        toast({ variant: "destructive", title: "Download Failed", description: "Could not generate ID card image." });
+      });
+    }
+  };
+
+  const handleEmailIdCard = () => {
+    // Placeholder: In a real app, this would involve server-side logic to send an email.
+    // For now, we can use a mailto link or just a toast.
+    if (registeredAttendee) {
+      const subject = `Your Event ID Card for ${eventDetails.name}`;
+      const body = `Hello ${registeredAttendee.name},\n\nPlease find your event details attached or download your ID card.\n\nEvent: ${eventDetails.name}\nVenue: ${eventDetails.venue}\nTime: ${eventDetails.time}\n\nView/Scan your QR: ${registeredAttendee.qrCodeValue}\n\nWe look forward to seeing you!`;
+      const mailtoLink = `mailto:${registeredAttendee.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      
+      // Attempt to open mail client. Some browsers might block this.
+      // window.open(mailtoLink, '_blank'); // Alternative to direct assignment
+
+      toast({
+        title: "Email ID Card (Placeholder)",
+        description: "To email your ID card, please download it and attach it to an email. A new email draft may have opened.",
+        action: (
+          <Button variant="outline" size="sm" asChild>
+            <a href={mailtoLink}>Open Email Client</a>
+          </Button>
+        )
+      });
+    }
+  };
   
   if (registeredAttendee) {
     return (
-      <div className="flex flex-col items-center py-8">
-        <QRCodeDisplay 
-          value={registeredAttendee.qrCodeValue} 
-          attendeeName={registeredAttendee.name} 
+      <div className="flex flex-col items-center py-8 space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight text-center">Registration Successful!</h1>
+        <p className="text-muted-foreground text-center">Here is your event ID card, {registeredAttendee.name}.</p>
+        
+        <AttendeeIdCard 
+          attendee={registeredAttendee} 
+          eventDetails={eventDetails}
+          idCardRef={idCardRef}
         />
+        
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-sm">
+          <Button onClick={handleDownloadIdCard} className="w-full" variant="default" size="lg">
+            <Download className="mr-2 h-5 w-5" /> Download ID Card
+          </Button>
+          <Button onClick={handleEmailIdCard} className="w-full" variant="secondary" size="lg">
+            <Mail className="mr-2 h-5 w-5" /> Email ID Card
+          </Button>
+        </div>
         <Button 
           onClick={() => setRegisteredAttendee(null)} 
           variant="outline" 
-          className="mt-8"
+          className="mt-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Register Another Attendee
@@ -136,7 +193,7 @@ export default function RegisterPage() {
     );
   }
 
-  if (registrationLimitReached && !pageError) { // Show limit reached message if not already showing another error
+  if (registrationLimitReached && !pageError) {
      return (
       <div className="flex flex-col items-center py-8 space-y-6 text-center">
         <Alert variant="destructive" className="w-full max-w-lg">
@@ -160,7 +217,12 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col items-center space-y-6 py-8">
       <h1 className="text-3xl font-bold tracking-tight">Register for Our Event</h1>
-      {(pageError || attendeesHookError) && ( // Show error from page state or hook state
+       <p className="text-center text-muted-foreground max-w-xl">
+        Join us for the <span className="font-semibold text-primary">{eventDetails.name}</span>! 
+        Fill out the form below to secure your spot. 
+        Your personalized ID card with a QR code for check-in will be generated upon successful registration.
+      </p>
+      {(pageError || attendeesHookError) && (
         <Alert variant="destructive" className="w-full max-w-lg">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -170,7 +232,7 @@ export default function RegisterPage() {
       <AttendeeForm 
         onSubmit={handleRegister} 
         isSubmitting={isSubmitting} 
-        disabled={registrationLimitReached} // Disable form if limit is reached
+        disabled={registrationLimitReached}
       />
     </div>
   );
