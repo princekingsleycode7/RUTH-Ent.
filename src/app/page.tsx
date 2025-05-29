@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { QrCode, Users, ShieldCheck, UserCircle, LogIn } from 'lucide-react';
+import { QrCode, UserPlus, ShieldCheck, UserCircle, LogIn } from 'lucide-react';
 import Image from 'next/image';
 
 export default function LandingPage() {
@@ -16,23 +16,40 @@ export default function LandingPage() {
           Welcome to SwiftCheck!
         </h1>
         <p className="text-xl md:text-2xl text-foreground/80 mb-10">
-          Effortless event check-ins and attendee management. Scan QR codes, manage your guests, and get personalized welcome messages with the power of AI.
+          Effortless event check-ins and attendee management. Register, scan QR codes, and enjoy personalized welcome messages.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+        <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 transform hover:scale-105">
+          <CardHeader>
+            <div className="flex items-center justify-center mb-3">
+              <UserPlus className="h-12 w-12 text-accent" />
+            </div>
+            <CardTitle className="text-2xl">New? Register Here!</CardTitle>
+            <CardDescription>Join our event by registering. You'll get a personalized QR code for easy check-in.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild size="lg" className="w-full">
+              <Link href="/register">
+                <UserPlus className="mr-2 h-5 w-5" /> Register for Event
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 transform hover:scale-105">
           <CardHeader>
             <div className="flex items-center justify-center mb-3">
               <UserCircle className="h-12 w-12 text-accent" />
             </div>
-            <CardTitle className="text-2xl">For Attendees</CardTitle>
-            <CardDescription>Already registered? Scan your QR code to view your details or get checked in quickly at events.</CardDescription>
+            <CardTitle className="text-2xl">Already Registered?</CardTitle>
+            <CardDescription>Scan your QR code to view your details or get checked in quickly at events.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild size="lg" className="w-full">
               <Link href="/scan">
-                <QrCode className="mr-2 h-5 w-5" /> Scan Your QR / View Info
+                <QrCode className="mr-2 h-5 w-5" /> Scan QR / View Info
               </Link>
             </Button>
           </CardContent>
@@ -44,7 +61,7 @@ export default function LandingPage() {
               <ShieldCheck className="h-12 w-12 text-accent" />
             </div>
             <CardTitle className="text-2xl">For Administrators</CardTitle>
-            <CardDescription>Access the dashboard to manage attendees, register new participants, and oversee event check-ins.</CardDescription>
+            <CardDescription>Access the dashboard to manage attendees, view stats, and oversee event check-ins.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild size="lg" variant="outline" className="w-full">

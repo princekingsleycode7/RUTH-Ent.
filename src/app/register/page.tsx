@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AttendeeForm, type AttendeeFormValues } from '@/components/AttendeeForm';
 import { QRCodeDisplay } from '@/components/QRCodeDisplay';
 import { useAttendees } from '@/hooks/useAttendees';
@@ -10,26 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RegisterPage() {
   const [registeredAttendee, setRegisteredAttendee] = useState<Attendee | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addAttendee, error: attendeesError } = useAttendees();
   const { toast } = useToast();
-  const { isAdmin, isAuthLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isAuthLoading) return; 
-
-    if (!isAdmin) {
-      router.replace('/admin-login');
-    }
-  }, [isAdmin, isAuthLoading, router]);
 
   const handleRegister = async (values: AttendeeFormValues) => {
     setIsSubmitting(true);
@@ -78,16 +64,6 @@ export default function RegisterPage() {
     }
   };
   
-  if (isAuthLoading || (!isAdmin && !isAuthLoading)) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
-        <p>Verifying access...</p>
-        <Skeleton className="w-full max-w-lg h-64 mt-4" />
-      </div>
-    );
-  }
-
-
   if (registeredAttendee) {
     return (
       <div className="flex flex-col items-center py-8">
@@ -109,7 +85,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col items-center space-y-6 py-8">
-      <h1 className="text-3xl font-bold tracking-tight">Register New Attendee</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Register for Our Event</h1>
       {attendeesError && (
         <Alert variant="destructive" className="w-full max-w-lg">
           <AlertTriangle className="h-4 w-4" />
