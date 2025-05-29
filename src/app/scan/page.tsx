@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Camera, AlertTriangle, QrCode, VideoOff } from 'lucide-react';
-// No explicit useAuth needed here if scanning is public, but could be added for user-specific features.
+import { cn } from '@/lib/utils'; // Added import for cn
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
