@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserPlus, Image as ImageIcon } from 'lucide-react';
+import { UserPlus, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 const MAX_FILE_SIZE = 700 * 1024; // 700KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -31,9 +31,10 @@ export type AttendeeFormValues = z.infer<typeof formSchema>;
 interface AttendeeFormProps {
   onSubmit: (values: AttendeeFormValues) => void;
   isSubmitting: boolean;
+  disabled?: boolean; // New prop to disable the form
 }
 
-export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
+export function AttendeeForm({ onSubmit, isSubmitting, disabled = false }: AttendeeFormProps) {
   const form = useForm<AttendeeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,6 +54,12 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
         <CardDescription>Enter the attendee's details to generate a unique QR code for check-in. Profile image is optional (max 700KB).</CardDescription>
       </CardHeader>
       <CardContent>
+        {disabled && (
+          <div className="mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-md flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <p className="text-sm font-medium">Registrations are currently full. This form is disabled.</p>
+          </div>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -62,7 +69,7 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Jane Doe" {...field} />
+                    <Input placeholder="e.g. Jane Doe" {...field} disabled={disabled} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -75,7 +82,7 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="e.g. jane.doe@example.com" {...field} />
+                    <Input type="email" placeholder="e.g. jane.doe@example.com" {...field} disabled={disabled} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -97,13 +104,14 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
                       onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
                       {...rest}
                       className="pt-2"
+                      disabled={disabled}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || disabled}>
               {isSubmitting ? 'Registering...' : 'Register Attendee & Generate QR'}
             </Button>
           </form>

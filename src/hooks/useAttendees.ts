@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 
 const ATTENDEES_COLLECTION = 'attendees';
+export const REGISTRATION_LIMIT = 50;
 
 export function useAttendees() {
   const [attendees, setAttendees] = useState<Attendee[]>([]);
@@ -62,36 +63,43 @@ export function useAttendees() {
   }, []);
 
   const addAttendee = useCallback(async (name: string, email: string, profileImageUri?: string): Promise<Attendee | null> => {
-    setError(null); // Clear previous errors
+    setError(null); 
+
+    if (attendees.length >= REGISTRATION_LIMIT) {
+      const limitError = `Registration limit reached (${REGISTRATION_LIMIT}). Cannot add more attendees.`;
+      console.warn(limitError);
+      setError(limitError);
+      return null;
+    }
+
     try {
       const initialData: {
         name: string;
         email: string;
         checkedIn: boolean;
-        profileImageUri?: string;
-        createdAt: any; // serverTimestamp
-        updatedAt: any; // serverTimestamp
         qrCodeValue: string; // Placeholder
+        createdAt: any; 
+        updatedAt: any; 
+        profileImageUri?: string;
       } = {
         name,
         email,
         checkedIn: false,
+        qrCodeValue: '', 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        qrCodeValue: '', // Placeholder, will be updated right after doc creation
       };
 
       if (profileImageUri) {
         initialData.profileImageUri = profileImageUri;
       }
-      // Note: checkInTime is NOT part of initialData, so it won't be written as undefined.
-
+      
       const docRef = await addDoc(collection(db, ATTENDEES_COLLECTION), initialData);
       const id = docRef.id;
       
       const qrCodeValue = typeof window !== 'undefined' 
                           ? `${window.location.origin}/attendee/${id}` 
-                          : `/attendee/${id}`;
+                          : `/attendee/${id}`; // Fallback for server-side or non-browser environments
       
       await updateDoc(docRef, { qrCodeValue });
 
@@ -101,8 +109,6 @@ export function useAttendees() {
         email,
         checkedIn: false,
         qrCodeValue,
-        // checkInTime is implicitly undefined here from the Attendee type
-        // createdAt and updatedAt are set by serverTimestamp() and would be on the doc in Firestore
       };
       if (profileImageUri) {
         newAttendee.profileImageUri = profileImageUri;
@@ -115,7 +121,7 @@ export function useAttendees() {
       let errorMessage = "Failed to register attendee.";
       if (e instanceof Error) {
         const firebaseError = e as any; 
-        if (firebaseError.code) { // Check if it's likely a FirebaseError
+        if (firebaseError.code) { 
           errorMessage = `Firestore error: ${firebaseError.message} (Code: ${firebaseError.code})`;
         } else {
           errorMessage = `Registration error: ${e.message}`;
@@ -126,14 +132,14 @@ export function useAttendees() {
       setError(errorMessage);
       return null;
     }
-  }, []);
+  }, [attendees]); // Added attendees to dependency array for the length check
 
   const getAttendeeById = useCallback((id: string): Attendee | undefined => {
     return attendees.find((attendee) => attendee.id === id);
   }, [attendees]);
 
   const checkInAttendee = useCallback(async (id: string): Promise<Attendee | null> => {
-    setError(null); // Clear previous errors
+    setError(null); 
     const attendeeRef = doc(db, ATTENDEES_COLLECTION, id);
     try {
       await updateDoc(attendeeRef, {
@@ -141,14 +147,11 @@ export function useAttendees() {
         checkInTime: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      // The onSnapshot listener will update the local state, so we don't need to manually update here.
-      // We can find the attendee from the current state for an optimistic return if needed,
-      // but it's generally better to rely on the real-time update.
       const updatedAttendee = attendees.find(a => a.id === id);
       if (updatedAttendee) {
-        return { ...updatedAttendee, checkedIn: true, checkInTime: Timestamp.now() }; // Optimistic update for immediate UI
+        return { ...updatedAttendee, checkedIn: true, checkInTime: Timestamp.now() }; 
       }
-      return null; // Or fetch the document again if immediate consistent return is critical
+      return null; 
     } catch (e) {
       console.error("Error checking in attendee:", e);
       let errorMessage = "Failed to check in attendee.";
@@ -165,7 +168,7 @@ export function useAttendees() {
       setError(errorMessage);
       return null;
     }
-  }, [attendees]);
+  }, [attendees]); // Added attendees to dependency array
 
   return { attendees, addAttendee, getAttendeeById, checkInAttendee, isLoading, error };
 }

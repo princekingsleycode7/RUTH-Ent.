@@ -4,11 +4,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useAttendees } from '@/hooks/useAttendees';
+import { useAttendees, REGISTRATION_LIMIT } from '@/hooks/useAttendees';
 import { AttendeeList } from '@/components/AttendeeList';
 import { Button } from '@/components/ui/button';
 import { exportAttendeesToCSV } from '@/lib/csv';
-import { Download, UserPlus, AlertTriangle, BarChart, Users } from 'lucide-react'; // Added Users here
+import { Download, UserPlus, AlertTriangle, BarChart, Users, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +20,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthLoading) return; // Wait for auth state to be determined
+    if (isAuthLoading) return; 
 
     if (!isAdmin) {
       router.replace('/admin-login');
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Checked-In Attendees</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" /> {/* This UserPlus is for a different card */}
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{checkedInCount}</div>}
@@ -96,6 +96,24 @@ export default function AdminDashboardPage() {
              {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{checkedInPercentage.toFixed(1)}%</div>}
             <p className="text-xs text-muted-foreground">
               Percentage of attendees checked in
+            </p>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Registration Capacity</CardTitle>
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-1/2" />
+            ) : (
+              <div className="text-2xl font-bold">
+                {totalCount} / {REGISTRATION_LIMIT}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {REGISTRATION_LIMIT - totalCount >= 0 ? `${REGISTRATION_LIMIT - totalCount} spots remaining` : 'Capacity reached'}
             </p>
           </CardContent>
         </Card>
