@@ -88,6 +88,7 @@ export default function RegisterPage() {
           description: `${values.name} has been successfully registered. Your ID card is ready.`,
         });
       } else {
+        // Error is already set by useAttendees hook if addAttendee returns null due to hook error
         if (!attendeesHookError) { 
              setPageError("Failed to register attendee. Please check the details and try again.");
         }
@@ -129,7 +130,7 @@ export default function RegisterPage() {
     // For now, we can use a mailto link or just a toast.
     if (registeredAttendee) {
       const subject = `Your Event ID Card for ${eventDetails.name}`;
-      const body = `Hello ${registeredAttendee.name},\n\nPlease find your event details attached or download your ID card.\n\nEvent: ${eventDetails.name}\nVenue: ${eventDetails.venue}\nTime: ${eventDetails.time}\n\nView/Scan your QR: ${registeredAttendee.qrCodeValue}\n\nWe look forward to seeing you!`;
+      const body = `Hello ${registeredAttendee.name},\n\nPlease find your event details attached or download your ID card.\n\nEvent: ${eventDetails.name}\nVenue: ${eventDetails.venue}\nTime: ${eventDetails.time}\n\nView/Scan your QR: ${window.location.origin}/attendee/${registeredAttendee.id}\n\nWe look forward to seeing you!`;
       const mailtoLink = `mailto:${registeredAttendee.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
       // Attempt to open mail client. Some browsers might block this.
@@ -149,7 +150,7 @@ export default function RegisterPage() {
   
   if (registeredAttendee) {
     return (
-      <div className="flex flex-col items-center py-8 space-y-6">
+      <div className="flex flex-col items-center pt-4 pb-8 space-y-6">
         <h1 className="text-3xl font-bold tracking-tight text-center">Registration Successful!</h1>
         <p className="text-muted-foreground text-center">Here is your event ID card, {registeredAttendee.name}.</p>
         
@@ -237,3 +238,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+
