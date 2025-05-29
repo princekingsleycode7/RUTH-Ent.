@@ -8,6 +8,7 @@ export interface Attendee {
   checkedIn: boolean;
   checkInTime?: Timestamp; // Firestore Timestamp for date and time
   qrCodeValue: string; // URL to the attendee page e.g., /attendee/[id]
+  profileImageUri?: string; // Data URI for profile image
   createdAt?: Timestamp; // Firestore Timestamp
   updatedAt?: Timestamp; // Firestore Timestamp
 }

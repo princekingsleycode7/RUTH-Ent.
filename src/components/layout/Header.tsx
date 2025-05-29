@@ -1,17 +1,21 @@
+
 "use client";
 
 import Link from 'next/link';
-import { Ticket, UserPlus, LayoutDashboard } from 'lucide-react';
+import { Ticket, UserPlus, LayoutDashboard, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 export function Header() {
   const pathname = usePathname();
+  const { isAdmin, isAuthenticated } = useAuth();
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/register', label: 'Register Attendee', icon: UserPlus },
+    ...(isAdmin ? [{ href: '/', label: 'Dashboard', icon: LayoutDashboard }] : []),
+    ...(isAdmin ? [{ href: '/register', label: 'Register Attendee', icon: UserPlus }] : []),
+    ...(isAuthenticated ? [{ href: '/scan', label: 'Scan QR', icon: QrCode }] : []),
   ];
 
   return (

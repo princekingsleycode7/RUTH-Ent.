@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from 'react-hook-form';
@@ -7,14 +8,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Image as ImageIcon } from 'lucide-react';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
+  profileImage: z
+    .custom<File>((val) => val instanceof File, "Please upload an image file.")
+    .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+    .refine(
+      (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+      "Only .jpg, .jpeg, .png and .webp formats are supported."
+    )
+    .optional(),
 });
 
-type AttendeeFormValues = z.infer<typeof formSchema>;
+export type AttendeeFormValues = z.infer<typeof formSchema>;
 
 interface AttendeeFormProps {
   onSubmit: (values: AttendeeFormValues) => void;
@@ -27,6 +39,7 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
     defaultValues: {
       name: '',
       email: '',
+      profileImage: undefined,
     },
   });
 
@@ -37,7 +50,7 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
           <UserPlus className="h-6 w-6 text-primary" />
           <CardTitle>Register New Attendee</CardTitle>
         </div>
-        <CardDescription>Enter the attendee's details to generate a unique QR code for check-in.</CardDescription>
+        <CardDescription>Enter the attendee's details to generate a unique QR code for check-in. Profile image is optional.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -63,6 +76,28 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="e.g. jane.doe@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="profileImage"
+              render={({ field: { onChange, value, ...rest } }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                     Profile Image (Optional)
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                      {...rest}
+                      className="pt-2"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

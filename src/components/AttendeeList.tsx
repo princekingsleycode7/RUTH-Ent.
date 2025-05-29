@@ -11,9 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Mail, User, CalendarClock } from 'lucide-react';
-import { format } from 'date-fns'; // parseISO removed
+import { format } from 'date-fns';
 
 interface AttendeeListProps {
   attendees: Attendee[];
@@ -30,6 +31,7 @@ export function AttendeeList({ attendees }: AttendeeListProps) {
         <TableCaption>A list of all registered attendees.</TableCaption>
         <TableHeader className="bg-muted/50">
           <TableRow>
+            <TableHead className="w-12 p-2"></TableHead> {/* For Avatar */}
             <TableHead className="w-[250px]">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" /> Name
@@ -55,6 +57,16 @@ export function AttendeeList({ attendees }: AttendeeListProps) {
         <TableBody>
           {attendees.map((attendee) => (
             <TableRow key={attendee.id} className="hover:bg-muted/20 transition-colors">
+              <TableCell className="p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage 
+                    src={attendee.profileImageUri || `https://placehold.co/40x40.png?text=${attendee.name.charAt(0)}`} 
+                    alt={attendee.name}
+                    data-ai-hint={attendee.profileImageUri ? "profile person" : "letter avatar"}
+                  />
+                  <AvatarFallback>{attendee.name.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+              </TableCell>
               <TableCell className="font-medium">{attendee.name}</TableCell>
               <TableCell>{attendee.email}</TableCell>
               <TableCell className="text-center">

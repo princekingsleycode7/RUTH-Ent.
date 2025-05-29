@@ -36,10 +36,11 @@ export function useAttendees() {
           name: data.name,
           email: data.email,
           checkedIn: data.checkedIn,
-          checkInTime: data.checkInTime as Timestamp | undefined, // Firestore Timestamp
+          checkInTime: data.checkInTime as Timestamp | undefined,
           qrCodeValue: data.qrCodeValue,
-          createdAt: data.createdAt as Timestamp | undefined, // Firestore Timestamp
-          updatedAt: data.updatedAt as Timestamp | undefined, // Firestore Timestamp
+          profileImageUri: data.profileImageUri,
+          createdAt: data.createdAt as Timestamp | undefined,
+          updatedAt: data.updatedAt as Timestamp | undefined,
         });
       });
       setAttendees(fetchedAttendees);
@@ -51,40 +52,39 @@ export function useAttendees() {
       setIsLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const addAttendee = useCallback(async (name: string, email: string): Promise<Attendee | null> => {
+  const addAttendee = useCallback(async (name: string, email: string, profileImageUri?: string): Promise<Attendee | null> => {
     try {
-      const attendeeData = {
+      const attendeeData: Omit<Attendee, 'id' | 'qrCodeValue'> & { createdAt: any, updatedAt: any } = {
         name,
         email,
         checkedIn: false,
-        qrCodeValue: '', // Will be updated shortly
-        checkInTime: null,
+        checkInTime: undefined, // Explicitly undefined or null
+        profileImageUri: profileImageUri || undefined,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
-      const docRef = await addDoc(collection(db, ATTENDEES_COLLECTION), attendeeData);
+      
+      // Firestore will generate ID, qrCodeValue will be set after
+      const docRef = await addDoc(collection(db, ATTENDEES_COLLECTION), {
+        ...attendeeData,
+        qrCodeValue: '', // Placeholder, will be updated
+      });
       const id = docRef.id;
       const qrCodeValue = typeof window !== 'undefined' ? `${window.location.origin}/attendee/${id}` : `/attendee/${id}`;
       
       await updateDoc(docRef, { qrCodeValue });
 
-      // The onSnapshot listener will update the local 'attendees' state.
-      // For immediate return, we construct a partial object.
-      // The full object with server timestamps will arrive via onSnapshot.
       return {
         id,
         name,
         email,
+        profileImageUri,
         checkedIn: false,
         qrCodeValue,
-        // createdAt and updatedAt will be Firestore server timestamps.
-        // For the purpose of returning immediately to update UI (e.g. QR code display)
-        // we can return a client-side representation or rely on onSnapshot.
-        // Let's return the essential parts.
-      } as Attendee; // Cast as Attendee, knowing some fields are server-generated
+      } as Attendee;
     } catch (e) {
       console.error("Error adding attendee to Firestore:", e);
       setError("Failed to register attendee.");
@@ -104,15 +104,11 @@ export function useAttendees() {
         checkInTime: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      // onSnapshot will update the local state.
-      // For immediate UI update in AttendeePage, we can find the attendee and return an updated version.
       const currentAttendee = attendees.find(a => a.id === id);
       if (currentAttendee) {
         return {
             ...currentAttendee,
             checkedIn: true,
-            // checkInTime, updatedAt will be server timestamps.
-            // This return is mostly for optimistic update or if direct data is needed post-action.
         } as Attendee; 
       }
       return null;

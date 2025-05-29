@@ -11,17 +11,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle, Mail, User, CalendarClock, MessageSquareHeart } from 'lucide-react';
-import { format } from 'date-fns'; // parseISO removed as we'll use Timestamp.toDate()
+import { AlertCircle, CheckCircle, CalendarClock, MessageSquareHeart } from 'lucide-react';
+import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-
 
 export default function AttendeePage() {
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : '';
   
   const { getAttendeeById, checkInAttendee: markAttendeeCheckedIn, isLoading: attendeesLoading, error: attendeesError } = useAttendees();
-  const [attendee, setAttendee] = useState<Attendee | null | undefined>(undefined); // undefined for loading, null for not found
+  const [attendee, setAttendee] = useState<Attendee | null | undefined>(undefined);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -46,22 +45,22 @@ export default function AttendeePage() {
     const fetchedAttendee = getAttendeeById(id);
     
     if (fetchedAttendee) {
-      setAttendee(fetchedAttendee);
+      setAttendee(fetchedAttendee); // Set initially
       if (!fetchedAttendee.checkedIn) {
         markAttendeeCheckedIn(id)
           .then(updatedAttendeeFromHook => {
-            if (updatedAttendeeFromHook) {
-              // The hook's onSnapshot will also update, but this gives immediate feedback for AI
-              // setAttendee(updatedAttendeeFromHook); // Optional: let onSnapshot handle state to avoid potential race
+            // Note: The hook's onSnapshot will update the `attendee` state reactively.
+            // So, `updatedAttendeeFromHook` is more for immediate logical branching here.
+            if (updatedAttendeeFromHook || getAttendeeById(id)?.checkedIn) { // Check local state or hook return
               generateCheckInConfirmation({
-                attendeeName: updatedAttendeeFromHook.name || 'Valued Attendee',
+                attendeeName: fetchedAttendee.name || 'Valued Attendee',
                 eventName: 'SwiftCheck Event',
                 timeSinceLastVisit: 'their first visit this year', // Placeholder
               }).then(aiResponse => {
                 setConfirmationMessage(aiResponse.confirmationMessage);
               }).catch(aiError => {
                 console.error("AI confirmation error:", aiError);
-                setConfirmationMessage("Welcome! We're delighted to have you."); // Fallback AI message
+                setConfirmationMessage("Welcome! We're delighted to have you.");
                  toast({
                     variant: 'destructive',
                     title: 'AI Message Error',
@@ -87,32 +86,36 @@ export default function AttendeePage() {
             });
           });
       } else {
+        // If already checked in when page loads
         setConfirmationMessage("This attendee has already been checked in.");
       }
     } else {
-      setAttendee(null); // Not found
+      setAttendee(null);
       setPageError("Attendee not found. Please ensure the QR code is correct or contact support.");
     }
     setPageLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, attendeesLoading, getAttendeeById, markAttendeeCheckedIn]);
+  }, [id, attendeesLoading, getAttendeeById, markAttendeeCheckedIn, toast]); // Added toast to dep array
+
+  // This effect handles changes to `attendee` from the onSnapshot listener in useAttendees
+  useEffect(() => {
+    if (attendee?.checkedIn && attendee.checkInTime && !confirmationMessage?.includes("already been checked in")) {
+        // If attendee becomes checked-in and we haven't shown "already checked in"
+        // This might re-trigger AI if not handled carefully, or be used to update status display
+    }
+  }, [attendee, confirmationMessage]);
 
 
-  if (pageLoading || attendeesLoading) {
+  if (pageLoading || (attendeesLoading && attendee === undefined) ) { // Refined loading condition
     return (
       <Card className="w-full max-w-lg mx-auto shadow-lg">
-        <CardHeader>
-          <Skeleton className="h-8 w-3/4 mb-2" />
-          <Skeleton className="h-4 w-1/2" />
+        <CardHeader className="text-center">
+          <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4 border-4" />
+          <Skeleton className="h-8 w-3/4 mx-auto mb-2" />
+          <Skeleton className="h-4 w-1/2 mx-auto" />
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <Skeleton className="h-16 w-16 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-64" />
-            </div>
-          </div>
+        <CardContent className="space-y-6 p-6">
+          <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-20 w-full" />
         </CardContent>
@@ -153,7 +156,10 @@ export default function AttendeePage() {
     <Card className="w-full max-w-lg mx-auto shadow-xl transform transition-all hover:scale-[1.01] duration-300">
       <CardHeader className="text-center">
         <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-primary shadow-md">
-          <AvatarImage src={`https://placehold.co/100x100.png?text=${attendee.name.charAt(0)}`} alt={attendee.name} data-ai-hint="profile person" />
+          <AvatarImage 
+            src={attendee.profileImageUri || `https://placehold.co/100x100.png?text=${attendee.name.charAt(0)}`} 
+            alt={attendee.name} 
+            data-ai-hint={attendee.profileImageUri ? "profile person" : "letter avatar"} />
           <AvatarFallback>{attendee.name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         <CardTitle className="text-3xl font-bold text-primary">{attendee.name}</CardTitle>
@@ -174,7 +180,6 @@ export default function AttendeePage() {
           <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-md text-sm">
             <CalendarClock className="h-5 w-5 text-primary" />
             <span className="font-medium text-muted-foreground">Checked In At:</span>
-            {/* Ensure checkInTime is a Firestore Timestamp and use .toDate() */}
             <span className="text-foreground">{format(attendee.checkInTime.toDate(), "PPPp")}</span>
           </div>
         )}
