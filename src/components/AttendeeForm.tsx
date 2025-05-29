@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { UserPlus, Image as ImageIcon } from 'lucide-react';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 700 * 1024; // 700KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const formSchema = z.object({
@@ -18,7 +18,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   profileImage: z
     .custom<File>((val) => val instanceof File, "Please upload an image file.")
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+    .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 700KB.`)
     .refine(
       (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
       "Only .jpg, .jpeg, .png and .webp formats are supported."
@@ -50,7 +50,7 @@ export function AttendeeForm({ onSubmit, isSubmitting }: AttendeeFormProps) {
           <UserPlus className="h-6 w-6 text-primary" />
           <CardTitle>Register New Attendee</CardTitle>
         </div>
-        <CardDescription>Enter the attendee's details to generate a unique QR code for check-in. Profile image is optional.</CardDescription>
+        <CardDescription>Enter the attendee's details to generate a unique QR code for check-in. Profile image is optional (max 700KB).</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
