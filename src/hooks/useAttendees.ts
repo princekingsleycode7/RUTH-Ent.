@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
+import type { AttendeeFormValues } from '@/components/AttendeeForm'; // For dateOfBirth type
 
 const ATTENDEES_COLLECTION = 'attendees';
 export const REGISTRATION_LIMIT = 50;
@@ -31,12 +32,14 @@ export function useAttendees() {
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedAttendees: Attendee[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         fetchedAttendees.push({
-          id: doc.id,
+          id: docSnap.id,
           name: data.name,
           email: data.email,
+          phoneNumber: data.phoneNumber,
+          dateOfBirth: data.dateOfBirth as Timestamp | undefined,
           checkedIn: data.checkedIn,
           checkInTime: data.checkInTime as Timestamp | undefined,
           qrCodeValue: data.qrCodeValue,
@@ -62,7 +65,13 @@ export function useAttendees() {
     return () => unsubscribe();
   }, []);
 
-  const addAttendee = useCallback(async (name: string, email: string, profileImageUri?: string): Promise<Attendee | null> => {
+  const addAttendee = useCallback(async (
+    name: string, 
+    email: string, 
+    profileImageUri?: string,
+    phoneNumber?: string,
+    dateOfBirth?: Date // Comes as Date from AttendeeFormValues
+  ): Promise<Attendee | null> => {
     setError(null); 
 
     if (attendees.length >= REGISTRATION_LIMIT) {
@@ -73,19 +82,11 @@ export function useAttendees() {
     }
 
     try {
-      const initialData: {
-        name: string;
-        email: string;
-        checkedIn: boolean;
-        qrCodeValue: string; // Placeholder
-        createdAt: any; 
-        updatedAt: any; 
-        profileImageUri?: string;
-      } = {
+      const initialData: Partial<Attendee> & { createdAt: any; updatedAt: any; qrCodeValue: string } = {
         name,
         email,
         checkedIn: false,
-        qrCodeValue: '', 
+        qrCodeValue: '', // Placeholder, will be updated
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -93,26 +94,35 @@ export function useAttendees() {
       if (profileImageUri) {
         initialData.profileImageUri = profileImageUri;
       }
+      if (phoneNumber) {
+        initialData.phoneNumber = phoneNumber;
+      }
+      if (dateOfBirth) {
+        initialData.dateOfBirth = Timestamp.fromDate(dateOfBirth);
+      }
       
       const docRef = await addDoc(collection(db, ATTENDEES_COLLECTION), initialData);
       const id = docRef.id;
       
       const qrCodeValue = typeof window !== 'undefined' 
                           ? `${window.location.origin}/attendee/${id}` 
-                          : `/attendee/${id}`; // Fallback for server-side or non-browser environments
+                          : `/attendee/${id}`; 
       
       await updateDoc(docRef, { qrCodeValue });
 
+      // Construct the returned Attendee object based on what was saved
       const newAttendee: Attendee = {
         id,
         name,
         email,
         checkedIn: false,
         qrCodeValue,
+        // Ensure all fields from initialData that are part of Attendee type are included
+        ...(profileImageUri && { profileImageUri }),
+        ...(phoneNumber && { phoneNumber }),
+        ...(dateOfBirth && { dateOfBirth: Timestamp.fromDate(dateOfBirth) }),
+        // Timestamps will be populated by Firestore, but we can add placeholders if needed for immediate UI
       };
-      if (profileImageUri) {
-        newAttendee.profileImageUri = profileImageUri;
-      }
       
       return newAttendee;
 
@@ -132,7 +142,7 @@ export function useAttendees() {
       setError(errorMessage);
       return null;
     }
-  }, [attendees]); // Added attendees to dependency array for the length check
+  }, [attendees]);
 
   const getAttendeeById = useCallback((id: string): Attendee | undefined => {
     return attendees.find((attendee) => attendee.id === id);
@@ -142,14 +152,20 @@ export function useAttendees() {
     setError(null); 
     const attendeeRef = doc(db, ATTENDEES_COLLECTION, id);
     try {
-      await updateDoc(attendeeRef, {
+      const updateData: Partial<Attendee> & { updatedAt: any } = {
         checkedIn: true,
-        checkInTime: serverTimestamp(),
+        checkInTime: serverTimestamp() as Timestamp, // Cast for immediate update if needed
         updatedAt: serverTimestamp(),
-      });
-      const updatedAttendee = attendees.find(a => a.id === id);
-      if (updatedAttendee) {
-        return { ...updatedAttendee, checkedIn: true, checkInTime: Timestamp.now() }; 
+      };
+      await updateDoc(attendeeRef, updateData);
+      
+      const updatedAttendeeLocal = attendees.find(a => a.id === id);
+      if (updatedAttendeeLocal) {
+        return { 
+          ...updatedAttendeeLocal, 
+          checkedIn: true, 
+          checkInTime: Timestamp.now() // Reflect immediate change locally
+        }; 
       }
       return null; 
     } catch (e) {
@@ -168,7 +184,7 @@ export function useAttendees() {
       setError(errorMessage);
       return null;
     }
-  }, [attendees]); // Added attendees to dependency array
+  }, [attendees]);
 
   return { attendees, addAttendee, getAttendeeById, checkInAttendee, isLoading, error };
 }

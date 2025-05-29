@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserPlus, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { UserPlus, Image as ImageIcon, AlertCircle, Phone, Cake } from 'lucide-react';
+import { differenceInYears } from 'date-fns';
 
 const MAX_FILE_SIZE = 700 * 1024; // 700KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -16,6 +17,14 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
+  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits.").optional().or(z.literal('')),
+  dateOfBirth: z.string()
+    .refine((val) => val !== "", { message: "Date of Birth is required." })
+    .pipe(z.coerce.date()) // Coerce string to Date object
+    .refine((date) => {
+      const age = differenceInYears(new Date(), date);
+      return age >= 13 && age <= 19;
+    }, { message: "Age must be between 13 and 19 years old." }),
   profileImage: z
     .custom<File>((val) => val instanceof File, "Please upload an image file.")
     .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 700KB.`)
@@ -31,7 +40,7 @@ export type AttendeeFormValues = z.infer<typeof formSchema>;
 interface AttendeeFormProps {
   onSubmit: (values: AttendeeFormValues) => void;
   isSubmitting: boolean;
-  disabled?: boolean; // New prop to disable the form
+  disabled?: boolean; 
 }
 
 export function AttendeeForm({ onSubmit, isSubmitting, disabled = false }: AttendeeFormProps) {
@@ -40,6 +49,8 @@ export function AttendeeForm({ onSubmit, isSubmitting, disabled = false }: Atten
     defaultValues: {
       name: '',
       email: '',
+      phoneNumber: '',
+      dateOfBirth: '', // Initialize as empty string for input type="date"
       profileImage: undefined,
     },
   });
@@ -88,10 +99,49 @@ export function AttendeeForm({ onSubmit, isSubmitting, disabled = false }: Atten
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                     <Phone className="h-4 w-4 text-muted-foreground" />
+                     Phone Number (Optional)
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="e.g. +1234567890" {...field} disabled={disabled} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dateOfBirth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Cake className="h-4 w-4 text-muted-foreground" />
+                     Date of Birth (Age 13-19)
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date" 
+                      {...field} 
+                      disabled={disabled}
+                      // Ensure the value is a string in 'yyyy-MM-dd' format for the input
+                      value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value}
+                      onChange={(e) => field.onChange(e.target.value)} // Pass string value to RHF
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="profileImage"
-              render={({ field: { onChange, value, ...rest } }) => (
+              render={({ field: { onChange, value, ...rest } }) => ( // 'value' is intentionally not spread to Input type="file"
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
                     <ImageIcon className="h-4 w-4 text-muted-foreground" />
@@ -102,6 +152,7 @@ export function AttendeeForm({ onSubmit, isSubmitting, disabled = false }: Atten
                       type="file" 
                       accept="image/*"
                       onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                      // Do not pass 'value' prop to file input as it's uncontrolled in that way
                       {...rest}
                       className="pt-2"
                       disabled={disabled}
@@ -112,7 +163,7 @@ export function AttendeeForm({ onSubmit, isSubmitting, disabled = false }: Atten
               )}
             />
             <Button type="submit" className="w-full" disabled={isSubmitting || disabled}>
-              {isSubmitting ? 'Registering...' : 'Register Attendee & Generate QR'}
+              {isSubmitting ? 'Registering...' : 'Register Attendee & Generate ID'}
             </Button>
           </form>
         </Form>

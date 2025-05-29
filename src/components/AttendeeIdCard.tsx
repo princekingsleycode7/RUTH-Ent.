@@ -5,13 +5,14 @@ import type { Attendee } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import QRCode from 'qrcode.react';
-import { Building, CalendarDays } from 'lucide-react'; 
+import { Building, CalendarDays, Clock } from 'lucide-react'; 
 
 interface AttendeeIdCardProps {
   attendee: Attendee;
   eventDetails: {
     name: string;
     venue: string;
+    date: string; // Added date
     time: string;
     logoUrl?: string; 
   };
@@ -29,7 +30,7 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
               src={eventDetails.logoUrl} 
               alt={`${eventDetails.name} Logo`} 
               className="h-12 mx-auto object-contain"
-              crossOrigin="anonymous" // Added crossOrigin attribute
+              crossOrigin="anonymous"
               data-ai-hint="event spark logo"
             />
           ) : (
@@ -52,10 +53,12 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
           
           <div className="flex items-center justify-between w-full mt-2 gap-3 px-1">
             <div className="p-1.5 bg-white rounded-md shadow-md">
-              <QRCode value={attendee.qrCodeValue} size={90} level="H" includeMargin={false} />
+              {/* Ensure QR code value is a non-empty string */}
+              <QRCode value={attendee.qrCodeValue || "error"} size={90} level="H" includeMargin={false} />
             </div>
             <div className="flex-1 text-left space-y-0.5 min-w-0"> 
-              <h3 className="text-xl font-semibold text-primary truncate">{attendee.name}</h3>
+              {/* Added break-words for name wrapping */}
+              <h3 className="text-xl font-semibold text-primary break-words">{attendee.name}</h3>
               <p className="text-xs text-muted-foreground truncate">{attendee.email}</p>
             </div>
           </div>
@@ -73,7 +76,14 @@ export function AttendeeIdCard({ attendee, eventDetails, idCardRef }: AttendeeId
           <div className="flex items-start gap-1.5">
             <CalendarDays className="h-3 w-3 text-primary shrink-0 mt-px" />
             <div>
-                <span className="font-medium">Date & Time:</span>
+                <span className="font-medium">Date:</span>
+                <p className="leading-snug">{eventDetails.date}</p>
+            </div>
+          </div>
+           <div className="flex items-start gap-1.5">
+            <Clock className="h-3 w-3 text-primary shrink-0 mt-px" />
+            <div>
+                <span className="font-medium">Time:</span>
                 <p className="leading-snug">{eventDetails.time}</p>
             </div>
           </div>

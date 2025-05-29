@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Mail, User, CalendarClock } from 'lucide-react';
+import { CheckCircle, XCircle, Mail, User, CalendarClock, Phone, Cake } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface AttendeeListProps {
@@ -32,7 +32,7 @@ export function AttendeeList({ attendees }: AttendeeListProps) {
         <TableHeader className="bg-muted/50">
           <TableRow>
             <TableHead className="w-12 p-2"></TableHead> {/* For Avatar */}
-            <TableHead className="w-[250px]">
+            <TableHead className="min-w-[150px]">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" /> Name
               </div>
@@ -40,6 +40,16 @@ export function AttendeeList({ attendees }: AttendeeListProps) {
             <TableHead>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" /> Email
+              </div>
+            </TableHead>
+            <TableHead>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4" /> Phone
+              </div>
+            </TableHead>
+             <TableHead>
+              <div className="flex items-center gap-2">
+                <Cake className="h-4 w-4" /> Date of Birth
               </div>
             </TableHead>
             <TableHead className="text-center">
@@ -69,6 +79,10 @@ export function AttendeeList({ attendees }: AttendeeListProps) {
               </TableCell>
               <TableCell className="font-medium">{attendee.name}</TableCell>
               <TableCell>{attendee.email}</TableCell>
+              <TableCell>{attendee.phoneNumber || 'N/A'}</TableCell>
+              <TableCell>
+                {attendee.dateOfBirth ? format(attendee.dateOfBirth.toDate(), "MMM d, yyyy") : 'N/A'}
+              </TableCell>
               <TableCell className="text-center">
                 {attendee.checkedIn ? (
                   <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-primary-foreground">

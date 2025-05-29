@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AttendeeForm, type AttendeeFormValues } from '@/components/AttendeeForm';
-import { AttendeeIdCard } from '@/components/AttendeeIdCard'; // New ID Card component
+import { AttendeeIdCard } from '@/components/AttendeeIdCard'; 
 import { useAttendees, REGISTRATION_LIMIT } from '@/hooks/useAttendees';
 import type { Attendee } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -14,11 +14,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
 import html2canvas from 'html2canvas';
 
-// Updated event details
 const eventDetails = {
   name: "SPARK CONFERENCE 2025",
   venue: "No 7 Item Street, Umuahia, Abia State, Nigeria",
-  time: "16 August 2025, 10:00 AM",
+  time: "10:00 AM", // Separated time from date for clarity on card
+  date: "16 August 2025",
   logoUrl: "https://storage.googleapis.com/idx-dev-01hsv3s9y3m1x07w3r6f3pn49w/images/spark_logo_1717171878053.png",
 };
 
@@ -79,7 +79,14 @@ export default function RegisterPage() {
     }
 
     try {
-      const newAttendee = await addAttendee(values.name, values.email, profileImageUri);
+      // The dateOfBirth from AttendeeFormValues is already a Date object due to z.coerce.date()
+      const newAttendee = await addAttendee(
+        values.name, 
+        values.email, 
+        profileImageUri,
+        values.phoneNumber,
+        values.dateOfBirth // This is a Date object
+      );
       
       if (newAttendee) {
         setRegisteredAttendee(newAttendee);
@@ -88,8 +95,7 @@ export default function RegisterPage() {
           description: `${values.name} has been successfully registered. Your ID card is ready.`,
         });
       } else {
-        // Error is already set by useAttendees hook if addAttendee returns null due to hook error
-         if (!attendeesHookError && !pageError) { // Check if pageError isn't already set by image processing
+         if (!attendeesHookError && !pageError) {
              setPageError("Failed to register attendee. Please check the details and try again.");
         }
       }
@@ -111,7 +117,8 @@ export default function RegisterPage() {
     if (idCardRef.current && registeredAttendee) {
       html2canvas(idCardRef.current, { 
         scale: 2, 
-        useCORS: true 
+        useCORS: true, // Important for external images like logos
+        allowTaint: true, // May help if CORS is restrictive and image can't be loaded cleanly
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `${registeredAttendee.name.replace(/\s+/g, '_')}_ID_Card.png`;
@@ -120,7 +127,7 @@ export default function RegisterPage() {
         toast({ title: "ID Card Downloading", description: "Your ID card image is being downloaded." });
       }).catch(err => {
         console.error("Error generating ID card image:", err);
-        toast({ variant: "destructive", title: "Download Failed", description: "Could not generate ID card image." });
+        toast({ variant: "destructive", title: "Download Failed", description: "Could not generate ID card image. Check console for details." });
       });
     }
   };
@@ -128,7 +135,7 @@ export default function RegisterPage() {
   const handleEmailIdCard = () => {
     if (registeredAttendee) {
       const subject = `Your Event ID Card for ${eventDetails.name}`;
-      const body = `Hello ${registeredAttendee.name},\n\nPlease find your event details attached or download your ID card.\n\nEvent: ${eventDetails.name}\nVenue: ${eventDetails.venue}\nTime: ${eventDetails.time}\n\nView/Scan your QR: ${window.location.origin}/attendee/${registeredAttendee.id}\n\nWe look forward to seeing you!`;
+      const body = `Hello ${registeredAttendee.name},\n\nPlease find your event details attached or download your ID card.\n\nEvent: ${eventDetails.name}\nVenue: ${eventDetails.venue}\nDate: ${eventDetails.date}\nTime: ${eventDetails.time}\n\nView/Scan your QR: ${window.location.origin}/attendee/${registeredAttendee.id}\n\nWe look forward to seeing you!`;
       const mailtoLink = `mailto:${registeredAttendee.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
       toast({
@@ -189,7 +196,7 @@ export default function RegisterPage() {
     );
   }
 
-  if (registrationLimitReached && !pageError) { // Ensure !pageError to prevent overriding specific errors
+  if (registrationLimitReached && !pageError) { 
      return (
       <div className="flex flex-col items-center py-8 space-y-6 text-center">
         <Alert variant="destructive" className="w-full max-w-lg">
@@ -233,4 +240,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
