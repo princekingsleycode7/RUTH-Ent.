@@ -17,8 +17,8 @@ import html2canvas from 'html2canvas';
 // Updated event details
 const eventDetails = {
   name: "SPARK CONFERENCE 2025",
-  venue: "Tech Megacenter", // Made more concise
-  time: "Oct 26-28, 2025", // Made more concise
+  venue: "No 7 Item Street, Umuahia, Abia State, Nigeria",
+  time: "16 August 2025, 10:00 AM",
   logoUrl: "https://storage.googleapis.com/idx-dev-01hsv3s9y3m1x07w3r6f3pn49w/images/spark_logo_1717171878053.png",
 };
 
