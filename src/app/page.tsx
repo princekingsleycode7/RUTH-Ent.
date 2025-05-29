@@ -1,100 +1,85 @@
 
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { useAttendees } from '@/hooks/useAttendees';
-import { AttendeeList } from '@/components/AttendeeList';
-import { Button } from '@/components/ui/button';
-import { exportAttendeesToCSV } from '@/lib/csv';
-import { Download, UserPlus, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { QrCode, Users, ShieldCheck, UserCircle, LogIn } from 'lucide-react';
+import Image from 'next/image';
 
-
-export default function AdminDashboardPage() {
-  const { attendees, isLoading, error: attendeesError } = useAttendees();
-  const { isAdmin, isAuthenticated } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-     if (!isAuthenticated) {
-      // Redirect to login or home if not authenticated
-      router.replace('/scan'); // Or a dedicated login page / home page for non-admins
-      return;
-    }
-    if (!isAdmin) {
-      router.replace('/unauthorized');
-    }
-  }, [isAdmin, isAuthenticated, router]);
-
-
-  if (!isAuthenticated || !isAdmin) {
-     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
-        <Alert variant="destructive" className="w-full max-w-lg">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Access Denied</AlertTitle>
-          <AlertDescription>
-            You are not authorized to access this page. 
-            <Link href="/scan" className="block mt-2 text-sm underline">Go to Scan Page</Link>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const handleExportCSV = () => {
-    exportAttendeesToCSV(attendees);
-  };
-
+export default function LandingPage() {
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Admin Dashboard</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/register">
-              <UserPlus className="mr-2 h-4 w-4" /> Register New Attendee
-            </Link>
-          </Button>
-          <Button onClick={handleExportCSV} disabled={attendees.length === 0}>
-            <Download className="mr-2 h-4 w-4" /> Export to CSV
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] space-y-12 py-8 px-4 text-center">
       
-      {attendeesError && (
-         <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error loading attendees</AlertTitle>
-          <AlertDescription>{attendeesError}</AlertDescription>
-        </Alert>
-      )}
+      <div className="max-w-3xl">
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-primary mb-6">
+          Welcome to SwiftCheck!
+        </h1>
+        <p className="text-xl md:text-2xl text-foreground/80 mb-10">
+          Effortless event check-ins and attendee management. Scan QR codes, manage your guests, and get personalized welcome messages with the power of AI.
+        </p>
+      </div>
 
-      {isLoading ? (
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+        <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 transform hover:scale-105">
           <CardHeader>
-            <Skeleton className="h-6 w-1/4" />
+            <div className="flex items-center justify-center mb-3">
+              <UserCircle className="h-12 w-12 text-accent" />
+            </div>
+            <CardTitle className="text-2xl">For Attendees</CardTitle>
+            <CardDescription>Already registered? Scan your QR code to view your details or get checked in quickly at events.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-2 border-b">
-                <Skeleton className="h-8 w-8 rounded-full mr-2" />
-                <Skeleton className="h-5 w-1/3" />
-                <Skeleton className="h-5 w-1/4" />
-                <Skeleton className="h-8 w-20 rounded-md" />
-                <Skeleton className="h-5 w-1/5" />
-              </div>
-            ))}
+          <CardContent>
+            <Button asChild size="lg" className="w-full">
+              <Link href="/scan">
+                <QrCode className="mr-2 h-5 w-5" /> Scan Your QR / View Info
+              </Link>
+            </Button>
           </CardContent>
         </Card>
-      ) : (
-        <AttendeeList attendees={attendees} />
-      )}
+
+        <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 transform hover:scale-105">
+          <CardHeader>
+            <div className="flex items-center justify-center mb-3">
+              <ShieldCheck className="h-12 w-12 text-accent" />
+            </div>
+            <CardTitle className="text-2xl">For Administrators</CardTitle>
+            <CardDescription>Access the dashboard to manage attendees, register new participants, and oversee event check-ins.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild size="lg" variant="outline" className="w-full">
+              <Link href="/admin-login">
+                <LogIn className="mr-2 h-5 w-5" /> Admin Login
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="mt-12 w-full max-w-5xl">
+         <Card className="overflow-hidden shadow-lg">
+            <Image 
+                src="https://placehold.co/1200x400.png" 
+                alt="Event attendees smiling" 
+                width={1200} 
+                height={400} 
+                className="object-cover w-full"
+                data-ai-hint="event conference"
+            />
+            <CardContent className="p-6 bg-card/80">
+                <h3 className="text-xl font-semibold mb-2">Seamless Event Management</h3>
+                <p className="text-card-foreground/70">
+                    SwiftCheck streamlines the entire check-in process, providing a smooth experience for both organizers and attendees. 
+                    Our platform leverages cutting-edge QR technology and AI-powered personalization to make every interaction memorable.
+                </p>
+            </CardContent>
+         </Card>
+      </div>
+
+      <footer className="mt-16 text-center text-muted-foreground text-sm">
+        <p>&copy; {new Date().getFullYear()} SwiftCheck. All rights reserved.</p>
+        <p>Powered by Next.js, Firebase, and Genkit AI.</p>
+      </footer>
     </div>
   );
 }
