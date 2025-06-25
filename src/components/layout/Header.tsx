@@ -9,7 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
-const SPARK_LOGO_URL = "https://storage.googleapis.com/idx-dev-01hsv3s9y3m1x07w3r6f3pn49w/images/spark_logo_1717171878053.png";
+const SPARK_LOGO_URL = "/images/logo.png";
 
 export function Header() {
   const pathname = usePathname();

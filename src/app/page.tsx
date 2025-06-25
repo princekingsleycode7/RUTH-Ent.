@@ -76,20 +76,14 @@ export default function LandingPage() {
       <div className="mt-12 w-full max-w-5xl">
          <Card className="overflow-hidden shadow-lg">
             <Image 
-                src="https://placehold.co/1200x400.png" 
+                src="/images/banner2.JPG" 
                 alt="Event attendees smiling" 
                 width={1200} 
                 height={400} 
                 className="object-cover w-full"
                 data-ai-hint="event conference"
             />
-            <CardContent className="p-6 bg-card/80">
-                <h3 className="text-xl font-semibold mb-2">Seamless Event Management</h3>
-                <p className="text-card-foreground/70">
-                    SwiftCheck streamlines the entire check-in process, providing a smooth experience for both organizers and attendees. 
-                    Our platform leverages cutting-edge QR technology and AI-powered personalization to make every interaction memorable.
-                </p>
-            </CardContent>
+            
          </Card>
       </div>
 
