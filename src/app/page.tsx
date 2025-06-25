@@ -89,7 +89,7 @@ export default function LandingPage() {
 
       <footer className="mt-16 text-center text-muted-foreground text-sm">
         <p>&copy; {new Date().getFullYear()} SwiftCheck. All rights reserved.</p>
-        <p>Powered by Next.js, Firebase, and Genkit AI.</p>
+        <p>Powered by CETF😎 and Firebase.</p>
       </footer>
     </div>
   );
